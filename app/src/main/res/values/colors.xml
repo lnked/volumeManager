@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#121418</color>
+    <color name="surface">#1C2128</color>
+    <color name="surface_elevated">#252B34</color>
+    <color name="accent">#3DDC97</color>
+    <color name="text_primary">#F2F4F7</color>
+    <color name="text_secondary">#A8B0BC</color>
+    <color name="stroke">#333A45</color>
+
+    <color name="overlay_glass">#E01A1C22</color>
+    <color name="overlay_glass_stroke">#40FFFFFF</color>
+    <color name="segment_active">#F2F4F7</color>
+    <color name="segment_inactive">#3A3D46</color>
+    <color name="segment_accent">#FF8A3D</color>
+    <color name="overlay_icon_tint">#C8CDD6</color>
+</resources>

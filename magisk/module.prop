@@ -1,0 +1,6 @@
+id=volumemanager_root
+name=VolumeManager Root
+version=v1.0.0
+versionCode=1
+author=VolumeManager
+description=Marks Magisk root path for VolumeManager per-app volume (libsu RootService in APK). Late_start marker after boot.

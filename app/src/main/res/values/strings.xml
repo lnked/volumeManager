@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="btn_open_a11y">Открыть спец. возможности</string>
+    <string name="btn_refresh">Обновить статус</string>
+
+    <string name="status_a11y_on">Спец. возможности: включены</string>
+    <string name="status_a11y_off">Спец. возможности: выключены</string>
+    <string name="status_service_ready">Привилегированный сервис: готов</string>
+    <string name="status_service_waiting">Привилегированный сервис: ожидание</string>
+
+    <string name="overlay_title_per_app">Громкость приложений</string>
+    <string name="overlay_title_fallback">Общая громкость медиа</string>
+    <string name="overlay_more_apps">+%d</string>
+    <string name="overlay_close">Закрыть</string>
+    <string name="overlay_volume_up">Громче</string>
+    <string name="overlay_volume_down">Тише</string>
+    <string name="overlay_mute">Без звука</string>
+    <string name="overlay_unmute">Включить звук</string>
+    <string name="global_media_volume">Медиа</string>
+</resources>

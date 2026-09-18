@@ -1,0 +1,17 @@
+# Gradle
+.gradle/
+build/
+**/build/
+local.properties
+*.iml
+.idea/
+.DS_Store
+captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+.cxx/
+out/
+.cursor/
+git@github.com:*/

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="overlay_panel_margin">10dp</dimen>
+    <dimen name="overlay_panel_padding_h">10dp</dimen>
+    <dimen name="overlay_panel_padding_v">14dp</dimen>
+    <dimen name="overlay_column_width">56dp</dimen>
+    <dimen name="overlay_column_gap">10dp</dimen>
+    <dimen name="overlay_corner_radius">28dp</dimen>
+    <dimen name="volume_segment_bar_width">28dp</dimen>
+    <dimen name="volume_segment_bar_height">220dp</dimen>
+    <dimen name="volume_segment_gap">2.5dp</dimen>
+    <dimen name="volume_segment_radius">2dp</dimen>
+    <dimen name="overlay_icon_size">18dp</dimen>
+    <dimen name="overlay_chevron_size">28dp</dimen>
+    <dimen name="overlay_close_size">28dp</dimen>
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Громкость приложений (Sui)</string>
+    <string name="a11y_service_label">Громкость приложений (Sui)</string>
+    <string name="a11y_service_description">Перехватывает кнопки громкости и показывает панель со слайдерами для приложений, которые сейчас играют звук. Для раздельной громкости нужен Sui (Magisk-модуль) или классический Shizuku.</string>
+
+    <string name="settings_title">Настройка</string>
+    <string name="settings_intro">1) Установите Sui (Magisk-модуль, https://github.com/RikkaApps/Sui) или классический Shizuku.\n2) Для Sui: после reboot разрешите приложению доступ в менеджере Sui/Shizuku.\n3) Для классического Shizuku: Start (Wireless debugging / ADB) после каждой перезагрузки.\n4) Включите службу спец. возможностей.\n5) Volume+/− — панель; без Sui/Shizuku — только общий STREAM_MUSIC.</string>
+
+    <string name="btn_grant">Выдать / открыть Sui</string>
+
+    <string name="status_backend_ok">Sui/Shizuku: доступен</string>
+    <string name="status_backend_needed">Sui/Shizuku: не запущен</string>
+    <string name="status_backend_denied">Sui/Shizuku: нет разрешения</string>
+
+    <string name="overlay_fallback_hint">Sui/Shizuku недоступен — общий STREAM_MUSIC. Установите Sui или Shizuku.</string>
+    <string name="overlay_hint_primary">Sui/Shizuku не запущен — общий STREAM_MUSIC. Установите модуль Sui или запустите Shizuku.</string>
+    <string name="overlay_hint_denied">Нет разрешения Sui/Shizuku — общий STREAM_MUSIC. Нажмите «Выдать / открыть Sui».</string>
+    <string name="overlay_hint_service_not_bound">Sui/Shizuku есть, UserService не подключён — общий STREAM_MUSIC. Нажмите «Обновить» / переоткройте приложение.</string>
+</resources>

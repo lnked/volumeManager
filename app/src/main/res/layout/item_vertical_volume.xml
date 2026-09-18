@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/overlay_column_width"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingHorizontal="2dp">
+
+    <ImageButton
+        android:id="@+id/btnVolumeUp"
+        android:layout_width="@dimen/overlay_chevron_size"
+        android:layout_height="@dimen/overlay_chevron_size"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/overlay_volume_up"
+        android:padding="2dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_chevron_up" />
+
+    <com.volumemanager.app.overlay.VerticalSegmentSeekBar
+        android:id="@+id/volumeSeek"
+        android:layout_width="@dimen/volume_segment_bar_width"
+        android:layout_height="@dimen/volume_segment_bar_height"
+        android:layout_marginTop="2dp" />
+
+    <ImageButton
+        android:id="@+id/btnVolumeDown"
+        android:layout_width="@dimen/overlay_chevron_size"
+        android:layout_height="@dimen/overlay_chevron_size"
+        android:layout_marginTop="2dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/overlay_volume_down"
+        android:padding="2dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_chevron_down" />
+
+    <ImageButton
+        android:id="@+id/btnMute"
+        android:layout_width="@dimen/overlay_chevron_size"
+        android:layout_height="@dimen/overlay_chevron_size"
+        android:layout_marginTop="4dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/overlay_mute"
+        android:padding="2dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_volume_unmute" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/appIcon"
+            android:layout_width="@dimen/overlay_icon_size"
+            android:layout_height="@dimen/overlay_icon_size"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/volumeDb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="11sp" />
+    </LinearLayout>
+</LinearLayout>

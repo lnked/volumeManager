@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Громкость приложений</string>
+    <string name="a11y_service_label">Громкость приложений</string>
+    <string name="a11y_service_description">Перехватывает кнопки громкости и показывает панель со слайдерами для приложений, которые сейчас играют звук. Для раздельной громкости нужен Magisk (модуль volumemanager_root) и выданный root.</string>
+
+    <string name="settings_title">Настройка</string>
+    <string name="settings_intro">1) Прошейте Magisk-модуль volumemanager_root → reboot.\n2) Установите APK (flavor root) и выдайте root этому приложению (Magisk).\n3) Включите службу спец. возможностей.\n4) Volume+/− — панель; без root — только общий STREAM_MUSIC.</string>
+
+    <string name="btn_grant">Выдать root</string>
+
+    <string name="status_backend_ok">Root: выдан</string>
+    <string name="status_backend_needed">Root: нужен Magisk / выдача su</string>
+    <string name="status_backend_denied">Root: отказ</string>
+
+    <string name="overlay_fallback_hint">Root недоступен — общий STREAM_MUSIC. Прошейте модуль Magisk и выдайте root.</string>
+    <string name="overlay_hint_primary">Нет root — общий STREAM_MUSIC. Magisk + модуль volumemanager_root + выдача su.</string>
+    <string name="overlay_hint_denied">Root отказан — общий STREAM_MUSIC. Разрешите su в Magisk.</string>
+    <string name="overlay_hint_service_not_bound">Root есть, RootService не подключён — общий STREAM_MUSIC. Нажмите «Обновить» / переоткройте приложение.</string>
+</resources>
