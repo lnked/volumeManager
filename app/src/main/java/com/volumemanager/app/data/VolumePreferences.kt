@@ -15,7 +15,12 @@ class VolumePreferences(context: Context) {
     private val prefs: SharedPreferences =
         context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    fun hasVolume(packageName: String): Boolean = prefs.contains(key(packageName))
+
     fun getVolume(packageName: String, default: Float = DEFAULT_VOLUME): Float {
+        if (!prefs.contains(key(packageName))) {
+            return default.coerceIn(0f, MAX_VOLUME)
+        }
         return prefs.getFloat(key(packageName), default).coerceIn(0f, MAX_VOLUME)
     }
 
@@ -51,6 +56,7 @@ class VolumePreferences(context: Context) {
         private const val PREFS_NAME = "per_app_volumes"
         private const val PREFIX = "vol_"
         private const val PRE_MUTE_PREFIX = "pre_mute_"
+        /** Fallback only when resolver unavailable — prefer [DefaultVolumeResolver]. */
         const val DEFAULT_VOLUME = 1f
         /** +6 dB digital boost ceiling (`10^(6/20)`). */
         val MAX_VOLUME: Float = 10f.pow(6f / 20f)

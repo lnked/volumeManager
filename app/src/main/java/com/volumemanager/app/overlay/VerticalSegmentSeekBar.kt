@@ -8,6 +8,7 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import androidx.core.content.ContextCompat
 import com.volumemanager.app.R
 import kotlin.math.abs
@@ -216,21 +217,51 @@ class VerticalSegmentSeekBar @JvmOverloads constructor(
         }
     }
 
+    private var touchDownX = 0f
+    private var touchDownY = 0f
+    private var touchAxisLocked = false
+    private var touchVertical = false
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        val slop = ViewConfiguration.get(context).scaledTouchSlop
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                parent?.requestDisallowInterceptTouchEvent(true)
+                touchDownX = event.x
+                touchDownY = event.y
+                touchAxisLocked = false
+                touchVertical = false
                 updateFromTouch(event.y)
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
+                if (!touchAxisLocked) {
+                    val dx = abs(event.x - touchDownX)
+                    val dy = abs(event.y - touchDownY)
+                    if (dx > slop || dy > slop) {
+                        touchAxisLocked = true
+                        touchVertical = dy >= dx
+                        if (touchVertical) {
+                            parent?.requestDisallowInterceptTouchEvent(true)
+                        } else {
+                            // Horizontal — let SwipeDismissFrameLayout intercept.
+                            return false
+                        }
+                    }
+                } else if (!touchVertical) {
+                    return false
+                }
                 updateFromTouch(event.y)
                 return true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (touchAxisLocked && !touchVertical) {
+                    touchAxisLocked = false
+                    return false
+                }
                 updateFromTouch(event.y)
                 performClick()
+                touchAxisLocked = false
                 return true
             }
         }

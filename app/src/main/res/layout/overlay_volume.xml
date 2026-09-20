@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.volumemanager.app.overlay.SwipeDismissFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_gravity="end|center_vertical"
@@ -57,4 +57,4 @@
                 android:orientation="horizontal" />
         </HorizontalScrollView>
     </LinearLayout>
-</FrameLayout>
+</com.volumemanager.app.overlay.SwipeDismissFrameLayout>

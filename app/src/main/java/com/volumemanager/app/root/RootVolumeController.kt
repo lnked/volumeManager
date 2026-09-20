@@ -18,6 +18,8 @@ import com.volumemanager.app.MediaStreamCeiling
 import com.volumemanager.app.PlaybackAppInfo
 import com.volumemanager.app.R
 import com.volumemanager.app.VolumeController
+import com.volumemanager.app.data.AppSettingsPreferences
+import com.volumemanager.app.data.DefaultVolumeResolver
 import com.volumemanager.app.data.VolumePreferences
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.ExecutorService
@@ -31,6 +33,7 @@ class RootVolumeController(
     private val context: Context,
     private val preferences: VolumePreferences,
 ) : VolumeController {
+    private val settings = AppSettingsPreferences(context)
     enum class UnavailableReason {
         NO_ROOT,
         ROOT_DENIED,
@@ -233,7 +236,17 @@ class RootVolumeController(
         }
     }
 
-    override fun getStoredVolume(packageName: String): Float = preferences.getVolume(packageName)
+    override fun getStoredVolume(packageName: String): Float {
+        if (preferences.hasVolume(packageName)) {
+            return preferences.getVolume(packageName)
+        }
+        val resolved = defaultFor(packageName)
+        setPackageVolume(packageName, resolved)
+        return resolved
+    }
+
+    private fun defaultFor(packageName: String): Float =
+        DefaultVolumeResolver.resolve(context, packageName, settings)
 
     /** STREAM_MUSIC must be max so per-app multipliers have full headroom. */
     private fun ensureMediaStreamCeiling(svc: IVolumePrivilegedService) {
@@ -247,7 +260,9 @@ class RootVolumeController(
             audioManager = am,
             activePackages = active,
             knownKeys = preferences.allVolumes().keys,
-            getVolume = { preferences.getVolume(it) },
+            getVolume = { pkg ->
+                if (preferences.hasVolume(pkg)) preferences.getVolume(pkg) else 1f
+            },
             applyVolume = { pkg, vol ->
                 preferences.setVolume(pkg, vol)
                 try {

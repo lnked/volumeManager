@@ -6,8 +6,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.RadioGroup
 import android.widget.ScrollView
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -21,9 +23,11 @@ import com.volumemanager.app.R
 import com.volumemanager.app.VolumeController
 import com.volumemanager.app.VolumeManagerApp
 import com.volumemanager.app.a11y.VolumeAccessibilityService
+import com.volumemanager.app.data.AppSettingsPreferences
 import com.volumemanager.app.data.BackendKind
 import com.volumemanager.app.root.RootVolumeController
 import rikka.shizuku.Shizuku
+import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity(), VolumeController.Listener {
     private lateinit var stepBackendMark: TextView
@@ -36,6 +40,7 @@ class MainActivity : AppCompatActivity(), VolumeController.Listener {
     private lateinit var btnGrant: Button
     private lateinit var backendGroup: RadioGroup
     private lateinit var controller: DualVolumeController
+    private lateinit var appSettings: AppSettingsPreferences
 
     private var awaitingSuiPermission = false
 
@@ -68,6 +73,8 @@ class MainActivity : AppCompatActivity(), VolumeController.Listener {
             insets
         }
 
+        appSettings = AppSettingsPreferences(this)
+
         stepBackendMark = findViewById(R.id.stepBackendMark)
         stepBackendText = findViewById(R.id.stepBackendText)
         stepA11yMark = findViewById(R.id.stepA11yMark)
@@ -98,6 +105,8 @@ class MainActivity : AppCompatActivity(), VolumeController.Listener {
             tryBindActive()
         }
 
+        bindOverlaySettings()
+
         findViewById<Button>(R.id.btnOpenA11y).setOnClickListener { openAccessibilitySettings() }
         btnGrant.setOnClickListener { onGrantClicked() }
         findViewById<Button>(R.id.btnRefresh).setOnClickListener {
@@ -107,6 +116,84 @@ class MainActivity : AppCompatActivity(), VolumeController.Listener {
         findViewById<Button>(R.id.btnGitHub).setOnClickListener {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_RELEASES_URL)))
         }
+    }
+
+    private fun bindOverlaySettings() {
+        val autoHideLabel = findViewById<TextView>(R.id.autoHideLabel)
+        val autoHideSeek = findViewById<SeekBar>(R.id.autoHideSeek)
+        autoHideSeek.max = AppSettingsPreferences.AUTO_HIDE_STEPS
+        fun secondsFromProgress(progress: Int): Float =
+            AppSettingsPreferences.MIN_AUTO_HIDE_SEC + progress * 0.1f
+        fun progressFromSeconds(seconds: Float): Int =
+            ((seconds - AppSettingsPreferences.MIN_AUTO_HIDE_SEC) * 10f).roundToInt()
+                .coerceIn(0, AppSettingsPreferences.AUTO_HIDE_STEPS)
+
+        fun refreshAutoHideLabel(seconds: Float) {
+            autoHideLabel.text = getString(R.string.settings_auto_hide, seconds)
+        }
+        autoHideSeek.progress = progressFromSeconds(appSettings.getAutoHideSeconds())
+        refreshAutoHideLabel(appSettings.getAutoHideSeconds())
+        autoHideSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val seconds = secondsFromProgress(progress)
+                refreshAutoHideLabel(seconds)
+                if (fromUser) appSettings.setAutoHideSeconds(seconds)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+        })
+
+        bindCategoryDefault(
+            asSystemCheck = findViewById(R.id.gamesAsSystem),
+            volumeSeek = findViewById(R.id.gamesVolumeSeek),
+            volumeLabel = findViewById(R.id.gamesVolumeLabel),
+            isAsSystem = { appSettings.isGamesAsSystem() },
+            setAsSystem = { appSettings.setGamesAsSystem(it) },
+            getVolume = { appSettings.getGamesDefaultVolume() },
+            setVolume = { appSettings.setGamesDefaultVolume(it) },
+        )
+        bindCategoryDefault(
+            asSystemCheck = findViewById(R.id.otherAsSystem),
+            volumeSeek = findViewById(R.id.otherVolumeSeek),
+            volumeLabel = findViewById(R.id.otherVolumeLabel),
+            isAsSystem = { appSettings.isOtherAsSystem() },
+            setAsSystem = { appSettings.setOtherAsSystem(it) },
+            getVolume = { appSettings.getOtherDefaultVolume() },
+            setVolume = { appSettings.setOtherDefaultVolume(it) },
+        )
+    }
+
+    private fun bindCategoryDefault(
+        asSystemCheck: CheckBox,
+        volumeSeek: SeekBar,
+        volumeLabel: TextView,
+        isAsSystem: () -> Boolean,
+        setAsSystem: (Boolean) -> Unit,
+        getVolume: () -> Float,
+        setVolume: (Float) -> Unit,
+    ) {
+        fun refreshVolumeUi() {
+            val asSystem = isAsSystem()
+            volumeSeek.isEnabled = !asSystem
+            volumeLabel.isEnabled = !asSystem
+            val pct = (getVolume() * 100f).roundToInt()
+            volumeSeek.progress = pct
+            volumeLabel.text = getString(R.string.settings_volume_percent, pct)
+        }
+        asSystemCheck.isChecked = isAsSystem()
+        refreshVolumeUi()
+        asSystemCheck.setOnCheckedChangeListener { _, checked ->
+            setAsSystem(checked)
+            refreshVolumeUi()
+        }
+        volumeSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                volumeLabel.text = getString(R.string.settings_volume_percent, progress)
+                if (fromUser) setVolume(progress / 100f)
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+        })
     }
 
     override fun onResume() {

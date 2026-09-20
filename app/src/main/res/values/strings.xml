@@ -56,4 +56,13 @@
     <string name="overlay_hint_primary">Привилегии не готовы — общий STREAM_MUSIC. Настройте выбранный backend в приложении.</string>
     <string name="overlay_hint_denied">Нет разрешения — общий STREAM_MUSIC. Нажмите кнопку выдачи доступа.</string>
     <string name="overlay_hint_service_not_bound">Доступ есть, сервис не подключён — общий STREAM_MUSIC. Нажмите «Обновить».</string>
+
+    <string name="settings_display_title">Отображение</string>
+    <string name="settings_auto_hide">Панель на экране: %1$.1f с</string>
+    <string name="settings_defaults_title">Громкость по умолчанию</string>
+    <string name="settings_defaults_hint">Для новых приложений без сохранённой громкости.</string>
+    <string name="settings_defaults_games">Игры</string>
+    <string name="settings_defaults_other">Остальные приложения</string>
+    <string name="settings_as_system">Как системная (медиа)</string>
+    <string name="settings_volume_percent">%1$d%%</string>
 </resources>

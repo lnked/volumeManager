@@ -8,6 +8,7 @@ import android.graphics.PixelFormat
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -22,6 +23,7 @@ import com.volumemanager.app.MediaStreamCeiling
 import com.volumemanager.app.R
 import com.volumemanager.app.VolumeController
 import com.volumemanager.app.a11y.VolumeAccessibilityService
+import com.volumemanager.app.data.AppSettingsPreferences
 import com.volumemanager.app.data.OverlayPlaybackColumn
 import com.volumemanager.app.data.PlaybackGrouping
 import com.volumemanager.app.data.VolumePreferences
@@ -31,7 +33,10 @@ import com.volumemanager.app.data.VolumePreferences
  * Falls back to one STREAM_MUSIC column when privileged service is unavailable.
  *
  * HW Volume+/−: first press shows the panel; further presses / hold step the focused slider.
+ * Double Volume− (within [DOUBLE_TAP_MUTE_MS]) mutes the focused column (active app or media).
  * Same slider also accepts drag and on-panel chevron buttons.
+ *
+ * Only STREAM_MUSIC / per-app player gain — never STREAM_RING / ringtone.
  */
 class VolumeOverlayController(
     private val context: Context,
@@ -40,6 +45,7 @@ class VolumeOverlayController(
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val preferences = VolumePreferences(context)
+    private val appSettings = AppSettingsPreferences(context)
     private val inflater = LayoutInflater.from(context)
     private val handler = Handler(Looper.getMainLooper())
     private var rootView: View? = null
@@ -53,6 +59,7 @@ class VolumeOverlayController(
     private var columnStorageKeys: List<String> = emptyList()
     /** Non-null while a HW volume key is held; drives continuous step. */
     private var holdVolumeUp: Boolean? = null
+    private var lastVolumeDownUptimeMs = 0L
     private val holdRunnable = object : Runnable {
         override fun run() {
             val up = holdVolumeUp ?: return
@@ -70,11 +77,30 @@ class VolumeOverlayController(
     /**
      * First tap (overlay hidden): show panel only.
      * While overlay visible: step once, then keep stepping if key stays down.
+     * Double Volume−: mute focused app / STREAM_MUSIC column.
      * Hold after show: after [HOLD_START_MS] starts continuous step.
      */
     fun onVolumeKeyDown(volumeUp: Boolean): Boolean {
         holdVolumeUp = volumeUp
         handler.removeCallbacks(holdRunnable)
+
+        if (!volumeUp) {
+            val now = SystemClock.uptimeMillis()
+            if (lastVolumeDownUptimeMs > 0L &&
+                now - lastVolumeDownUptimeMs <= DOUBLE_TAP_MUTE_MS
+            ) {
+                lastVolumeDownUptimeMs = 0L
+                stopHold()
+                if (!isShowing()) show()
+                muteFocused()
+                scheduleAutoHide()
+                return true
+            }
+            lastVolumeDownUptimeMs = now
+        } else {
+            lastVolumeDownUptimeMs = 0L
+        }
+
         if (!isShowing()) {
             show()
             handler.postDelayed(holdRunnable, HOLD_START_MS)
@@ -106,6 +132,7 @@ class VolumeOverlayController(
         val view = inflater.inflate(R.layout.overlay_volume, null)
         rootView = view
         panelView = view.findViewById(R.id.overlayPanel)
+        (view as? SwipeDismissFrameLayout)?.onSwipeDismiss = { hideAnimated() }
         view.findViewById<ImageButton>(R.id.btnClose).setOnClickListener { hideAnimated() }
         view.findViewById<HorizontalScrollView>(R.id.sliderScroll).setOnTouchListener { _, event ->
             when (event.actionMasked) {
@@ -198,6 +225,30 @@ class VolumeOverlayController(
         seeks[idx].stepBy(deltaSegments, fromNewGesture = fromNewGesture)
     }
 
+    /** Mute focused column (active app / games group / STREAM_MUSIC). Saves pre-mute for unmute. */
+    private fun muteFocused() {
+        if (seeks.isEmpty()) {
+            refreshContent(force = true)
+        }
+        if (seeks.isEmpty()) return
+        val idx = focusedSeekIndex.coerceIn(0, seeks.lastIndex)
+        val seek = seeks[idx]
+        val key = focusedStorageKey
+            ?: columnStorageKeys.getOrNull(idx)
+            ?: return
+        val linear = if (seek.boostCapacity > 0) {
+            DbVolumeMapper.uiToLinear(seek.progress, seek.unityUiFraction)
+        } else {
+            seek.progress.coerceIn(0f, 1f)
+        }
+        if (linear <= 0f) return
+        preferences.setPreMuteVolume(key, linear)
+        if (seek.boostUnlocked) {
+            seek.lockBoostZone(0f)
+        }
+        seek.setProgress(0f, fromUser = true)
+    }
+
     private fun focusSeek(seek: VerticalSegmentSeekBar) {
         val idx = seeks.indexOf(seek)
         if (idx >= 0) {
@@ -260,7 +311,7 @@ class VolumeOverlayController(
 
     private fun scheduleAutoHide() {
         handler.removeCallbacks(hideRunnable)
-        handler.postDelayed(hideRunnable, AUTO_HIDE_MS)
+        handler.postDelayed(hideRunnable, appSettings.getAutoHideMs())
     }
 
     @SuppressLint("SetTextI18n")
@@ -363,7 +414,10 @@ class VolumeOverlayController(
             audioManager = audioManager,
             activePackages = activePackages,
             knownKeys = preferences.allVolumes().keys,
-            getVolume = { volumeController.getStoredVolume(it) },
+            // Unknown packages: treat player as 1f so lift scales to system ratio once.
+            getVolume = { pkg ->
+                if (preferences.hasVolume(pkg)) preferences.getVolume(pkg) else 1f
+            },
             applyVolume = { pkg, vol -> volumeController.setPackageVolume(pkg, vol) },
         )
     }
@@ -615,11 +669,12 @@ class VolumeOverlayController(
 
     companion object {
         private const val TAG = "VolumeOverlay"
-        private const val AUTO_HIDE_MS = 2800L
         private const val ANIM_MS = 220L
         /** Delay before continuous step while key is held (ViewConfiguration-like). */
         private const val HOLD_START_MS = 400L
         private const val HOLD_TICK_MS = 50L
+        /** Two Volume− downs within this window → mute focused column. */
+        private const val DOUBLE_TAP_MUTE_MS = 380L
         /** Avoid restoring a literal 0 after unmute when pre-mute missing/zero. */
         private const val MUTE_RESTORE_MIN = 0.05f
     }

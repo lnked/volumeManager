@@ -56,4 +56,13 @@
     <string name="overlay_hint_primary">Privileges not ready — global STREAM_MUSIC. Configure the selected backend in the app.</string>
     <string name="overlay_hint_denied">Permission denied — global STREAM_MUSIC. Tap the grant button.</string>
     <string name="overlay_hint_service_not_bound">Access granted, service not bound — global STREAM_MUSIC. Tap Refresh.</string>
+
+    <string name="settings_display_title">Display</string>
+    <string name="settings_auto_hide">Panel on screen: %1$.1f s</string>
+    <string name="settings_defaults_title">Default volume</string>
+    <string name="settings_defaults_hint">For new apps without a saved volume.</string>
+    <string name="settings_defaults_games">Games</string>
+    <string name="settings_defaults_other">Other apps</string>
+    <string name="settings_as_system">Match system media</string>
+    <string name="settings_volume_percent">%1$d%%</string>
 </resources>
