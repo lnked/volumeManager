@@ -39,21 +39,22 @@
             android:textSize="11sp"
             android:visibility="gone" />
 
-        <LinearLayout
-            android:id="@+id/sliderContainer"
+        <HorizontalScrollView
+            android:id="@+id/sliderScroll"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:gravity="bottom"
-            android:orientation="horizontal" />
+            android:scrollbars="none"
+            android:overScrollMode="never"
+            android:clipToPadding="false"
+            android:fillViewport="false">
 
-        <TextView
-            android:id="@+id/overlayMoreCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp"
-            android:visibility="gone" />
+            <LinearLayout
+                android:id="@+id/sliderContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="bottom"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
     </LinearLayout>
 </FrameLayout>

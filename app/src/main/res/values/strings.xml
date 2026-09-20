@@ -1,12 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">Громкость приложений</string>
+    <string name="a11y_service_label">Громкость приложений</string>
+    <string name="a11y_service_description">Перехватывает кнопки громкости и показывает панель со слайдерами для приложений, которые сейчас играют звук. Для раздельной громкости нужен Magisk (root) или Sui/Shizuku — выберите в настройках приложения.</string>
+
+    <string name="settings_pitch">Volume+/− открывает панель громкости по приложениям. Нужен Magisk/root или Sui/Shizuku.</string>
+    <string name="checklist_title">Настройка</string>
+    <string name="step_backend_ok">1. Привилегии готовы</string>
+    <string name="step_backend_need">1. Выдай root или доступ Sui</string>
+    <string name="step_a11y_ok">2. Спец. возможности включены</string>
+    <string name="step_a11y_need">2. Включи спец. возможности</string>
+    <string name="step_ready_ok">3. Готово — жми Volume+/−</string>
+    <string name="step_ready_need">3. Дождись готовности сервиса</string>
+    <string name="checklist_mark_ok">✓</string>
+    <string name="checklist_mark_need">○</string>
+
+    <string name="backend_picker_title">Способ привилегий</string>
+    <string name="backend_root">Magisk / root</string>
+    <string name="backend_sui">Sui / Shizuku</string>
+
     <string name="btn_open_a11y">Открыть спец. возможности</string>
     <string name="btn_refresh">Обновить статус</string>
+    <string name="btn_grant_root">Выдать root</string>
+    <string name="btn_grant_sui">Выдать / открыть Sui</string>
+    <string name="btn_github">GitHub / Releases</string>
+
+    <string name="toast_root_denied">Root не выдан</string>
+    <string name="toast_sui_denied">Нет разрешения Sui/Shizuku</string>
+    <string name="toast_sui_needed">Сначала запусти Sui или Shizuku</string>
 
     <string name="status_a11y_on">Спец. возможности: включены</string>
     <string name="status_a11y_off">Спец. возможности: выключены</string>
     <string name="status_service_ready">Привилегированный сервис: готов</string>
     <string name="status_service_waiting">Привилегированный сервис: ожидание</string>
+
+    <string name="status_root_ok">Root: выдан</string>
+    <string name="status_root_needed">Root: нужен Magisk / выдача su</string>
+    <string name="status_root_denied">Root: отказ</string>
+    <string name="status_sui_ok">Sui/Shizuku: доступен</string>
+    <string name="status_sui_needed">Sui/Shizuku: не запущен</string>
+    <string name="status_sui_denied">Sui/Shizuku: нет разрешения</string>
 
     <string name="overlay_title_per_app">Громкость приложений</string>
     <string name="overlay_title_fallback">Общая громкость медиа</string>
@@ -16,5 +49,11 @@
     <string name="overlay_volume_down">Тише</string>
     <string name="overlay_mute">Без звука</string>
     <string name="overlay_unmute">Включить звук</string>
+    <string name="overlay_games_group">Игры</string>
     <string name="global_media_volume">Медиа</string>
+
+    <string name="overlay_fallback_hint">Привилегии недоступны — общий STREAM_MUSIC. Выберите Magisk/root или Sui/Shizuku в настройках.</string>
+    <string name="overlay_hint_primary">Привилегии не готовы — общий STREAM_MUSIC. Настройте выбранный backend в приложении.</string>
+    <string name="overlay_hint_denied">Нет разрешения — общий STREAM_MUSIC. Нажмите кнопку выдачи доступа.</string>
+    <string name="overlay_hint_service_not_bound">Доступ есть, сервис не подключён — общий STREAM_MUSIC. Нажмите «Обновить».</string>
 </resources>

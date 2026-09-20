@@ -7,6 +7,7 @@ interface VolumeController {
     interface Listener {
         fun onAvailabilityChanged(available: Boolean)
         fun onServiceReady(ready: Boolean)
+        fun onPlaybackChanged() {}
     }
 
     fun start()

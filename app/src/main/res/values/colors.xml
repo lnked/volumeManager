@@ -1,17 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="bg">#121418</color>
+    <color name="launcher_bg">#000000</color>
     <color name="surface">#1C2128</color>
     <color name="surface_elevated">#252B34</color>
     <color name="accent">#3DDC97</color>
     <color name="text_primary">#F2F4F7</color>
     <color name="text_secondary">#A8B0BC</color>
     <color name="stroke">#333A45</color>
+    <color name="status_ok">#3DDC97</color>
+    <color name="status_need">#A8B0BC</color>
 
     <color name="overlay_glass">#E01A1C22</color>
     <color name="overlay_glass_stroke">#40FFFFFF</color>
     <color name="segment_active">#F2F4F7</color>
     <color name="segment_inactive">#3A3D46</color>
     <color name="segment_accent">#FF8A3D</color>
+    <!-- Boost zone (>0 dB): clearly orange even when empty -->
+    <color name="segment_boost_inactive">#8B4A28</color>
+    <color name="segment_boost_active">#FF6A1A</color>
+    <color name="segment_boost_accent">#FFC14D</color>
     <color name="overlay_icon_tint">#C8CDD6</color>
 </resources>

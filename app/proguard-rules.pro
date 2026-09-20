@@ -1,7 +1,7 @@
-# libsu / RootService (root flavor)
+# libsu / RootService
 -keep class com.topjohnwu.superuser.** { *; }
 
-# Shizuku (sui flavor)
+# Shizuku
 -keep class rikka.shizuku.** { *; }
 -keep class moe.shizuku.api.** { *; }
 
@@ -12,6 +12,8 @@
 # AIDL + privileged backends
 -keep class com.volumemanager.app.IVolumePrivilegedService { *; }
 -keep class com.volumemanager.app.IVolumePrivilegedService$Stub { *; }
+-keep class com.volumemanager.app.IPlaybackChangeListener { *; }
+-keep class com.volumemanager.app.IPlaybackChangeListener$Stub { *; }
 -keep class com.volumemanager.app.root.** { *; }
 -keep class com.volumemanager.app.privileged.** { *; }
 -keep class com.volumemanager.app.shizuku.** { *; }

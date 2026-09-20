@@ -45,24 +45,29 @@
         android:src="@drawable/ic_volume_unmute" />
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
 
         <ImageView
             android:id="@+id/appIcon"
             android:layout_width="@dimen/overlay_icon_size"
             android:layout_height="@dimen/overlay_icon_size"
-            android:contentDescription="@null" />
+            android:clipToOutline="true"
+            android:contentDescription="@null"
+            android:padding="1dp"
+            android:scaleType="fitCenter" />
 
         <TextView
             android:id="@+id/volumeDb"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
+            android:layout_marginTop="2dp"
+            android:gravity="center"
+            android:maxLines="1"
             android:textColor="@color/text_secondary"
-            android:textSize="11sp" />
+            android:textSize="10sp" />
     </LinearLayout>
 </LinearLayout>

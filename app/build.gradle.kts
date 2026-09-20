@@ -11,20 +11,8 @@ android {
         applicationId = "com.volumemanager.app"
         minSdk = 33
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
-    }
-
-    flavorDimensions += "backend"
-    productFlavors {
-        create("root") {
-            dimension = "backend"
-        }
-        create("sui") {
-            dimension = "backend"
-            applicationIdSuffix = ".sui"
-            versionNameSuffix = "-sui"
-        }
+        versionCode = 3
+        versionName = "1.2.0"
     }
 
     buildTypes {
@@ -75,10 +63,10 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     val libsu = "6.0.0"
-    "rootImplementation"("com.github.topjohnwu.libsu:core:$libsu")
-    "rootImplementation"("com.github.topjohnwu.libsu:service:$libsu")
+    implementation("com.github.topjohnwu.libsu:core:$libsu")
+    implementation("com.github.topjohnwu.libsu:service:$libsu")
 
     val shizuku = "13.1.5"
-    "suiImplementation"("dev.rikka.shizuku:api:$shizuku")
-    "suiImplementation"("dev.rikka.shizuku:provider:$shizuku")
+    implementation("dev.rikka.shizuku:api:$shizuku")
+    implementation("dev.rikka.shizuku:provider:$shizuku")
 }
