@@ -23,8 +23,10 @@ object CameraAppDetector {
     private fun isRoleCamera(context: Context, packageName: String): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false
         return try {
-            val rm = context.getSystemService(RoleManager::class.java) ?: return false
-            rm.getRoleHolders(RoleManager.ROLE_CAMERA).contains(packageName)
+            val rm = context.getSystemService(Context.ROLE_SERVICE) as? RoleManager ?: return false
+            // ROLE_CAMERA = "android.app.role.CAMERA" (API 29+)
+            val holders = rm.getRoleHolders("android.app.role.CAMERA")
+            holders.contains(packageName)
         } catch (_: Throwable) {
             false
         }
@@ -35,7 +37,6 @@ object CameraAppDetector {
         return p.contains(".camera") ||
             p.endsWith("camera") ||
             p.contains("googlecamera") ||
-            p == "com.google.android.GoogleCamera" ||
             p.startsWith("com.asus.camera") ||
             p.startsWith("com.sec.android.app.camera") ||
             p.startsWith("com.android.camera") ||
