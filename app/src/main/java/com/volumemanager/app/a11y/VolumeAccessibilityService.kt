@@ -73,6 +73,13 @@ class VolumeAccessibilityService : AccessibilityService() {
             -> Unit
             else -> return false
         }
+
+        // Camera apps use Volume− as shutter — do not steal the key.
+        val fg = foregroundPackage()
+        if (fg != null && CameraAppDetector.isCameraPackage(this, fg)) {
+            return false
+        }
+
         val volumeUp = event.keyCode == KeyEvent.KEYCODE_VOLUME_UP
 
         val controller = VolumeManagerApp.instance.volumeController
