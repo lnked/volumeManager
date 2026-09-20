@@ -1,10 +1,8 @@
 package com.volumemanager.app.a11y
 
-import android.app.role.RoleManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
 import android.provider.MediaStore
 
 /**
@@ -14,22 +12,9 @@ import android.provider.MediaStore
 object CameraAppDetector {
     fun isCameraPackage(context: Context, packageName: String): Boolean {
         if (packageName.isEmpty()) return false
-        if (isRoleCamera(context, packageName)) return true
         if (looksLikeCameraPackageName(packageName)) return true
         if (handlesCaptureIntent(context, packageName)) return true
         return false
-    }
-
-    private fun isRoleCamera(context: Context, packageName: String): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false
-        return try {
-            val rm = context.getSystemService(Context.ROLE_SERVICE) as? RoleManager ?: return false
-            // ROLE_CAMERA = "android.app.role.CAMERA" (API 29+)
-            val holders = rm.getRoleHolders("android.app.role.CAMERA")
-            holders.contains(packageName)
-        } catch (_: Throwable) {
-            false
-        }
     }
 
     private fun looksLikeCameraPackageName(packageName: String): Boolean {
