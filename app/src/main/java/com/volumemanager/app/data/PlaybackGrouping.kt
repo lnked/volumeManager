@@ -2,6 +2,7 @@ package com.volumemanager.app.data
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
 import com.volumemanager.app.PlaybackAppInfo
 
 /**
@@ -21,6 +22,7 @@ data class OverlayPlaybackColumn(
 
 object PlaybackGrouping {
     fun isGame(pm: PackageManager, packageName: String): Boolean {
+        if (looksLikeGamePackage(packageName)) return true
         return try {
             val ai = pm.getApplicationInfo(packageName, 0)
             if (ai.category == ApplicationInfo.CATEGORY_GAME) return true
@@ -29,6 +31,17 @@ object PlaybackGrouping {
         } catch (_: PackageManager.NameNotFoundException) {
             false
         }
+    }
+
+    /** Runtime signal from active players (many games omit CATEGORY_GAME). */
+    fun isGameUsage(usage: Int): Boolean = usage == AudioAttributes.USAGE_GAME
+
+    fun looksLikeGamePackage(packageName: String): Boolean {
+        val p = packageName.lowercase()
+        return p.startsWith("game.") ||
+            p.contains(".game.") ||
+            p.endsWith(".game") ||
+            p.contains("games")
     }
 
     fun columns(

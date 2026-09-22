@@ -106,10 +106,15 @@ class VerticalSegmentSeekBar @JvmOverloads constructor(
         invalidate()
     }
 
-    /** Hide boost; [linear01] is apply-volume in `0..1`. */
-    fun lockBoostZone(linear01: Float) {
+    /**
+     * Hide boost zone. [uiProgress] is the post-lock bar fraction `0..1`
+     * (segment index / normalSegmentCount), not linear gain.
+     */
+    fun lockBoostZone(uiProgress: Float? = null) {
         boostUnlocked = false
-        progressInternal = linear01.coerceIn(0f, 1f)
+        if (uiProgress != null) {
+            progressInternal = uiProgress.coerceIn(0f, 1f)
+        }
         invalidate()
     }
 
@@ -168,8 +173,8 @@ class VerticalSegmentSeekBar @JvmOverloads constructor(
 
         val targetSeg = (currentSeg + deltaSegments).coerceIn(0, total)
         if (boostUnlocked && targetSeg < normalSegmentCount) {
-            val linear01 = targetSeg.toFloat() / normalSegmentCount.toFloat()
-            lockBoostZone(linear01)
+            // UI fraction on the collapsed (normal-only) bar.
+            lockBoostZone(targetSeg.toFloat() / normalSegmentCount.toFloat())
             listener?.onProgressChanged(this, progressInternal, true)
             return
         }
@@ -280,8 +285,7 @@ class VerticalSegmentSeekBar @JvmOverloads constructor(
         val stepped = (raw * count).roundToInt().coerceIn(0, count)
 
         if (boostUnlocked && stepped < normalSegmentCount) {
-            val linear01 = stepped.toFloat() / normalSegmentCount.toFloat()
-            lockBoostZone(linear01)
+            lockBoostZone(stepped.toFloat() / normalSegmentCount.toFloat())
             listener?.onProgressChanged(this, progressInternal, true)
             return
         }

@@ -26,6 +26,7 @@ import com.volumemanager.app.a11y.VolumeAccessibilityService
 import com.volumemanager.app.data.AppSettingsPreferences
 import com.volumemanager.app.data.OverlayPlaybackColumn
 import com.volumemanager.app.data.PlaybackGrouping
+import com.volumemanager.app.data.StoredVolumeLookup
 import com.volumemanager.app.data.VolumePreferences
 
 /**
@@ -416,9 +417,10 @@ class VolumeOverlayController(
             knownKeys = preferences.allVolumes().keys,
             // Unknown packages: treat player as 1f so lift scales to system ratio once.
             getVolume = { pkg ->
-                if (preferences.hasVolume(pkg)) preferences.getVolume(pkg) else 1f
+                StoredVolumeLookup.getOrUnity(preferences, context.packageManager, pkg)
             },
             applyVolume = { pkg, vol -> volumeController.setPackageVolume(pkg, vol) },
+            isGame = { pkg -> PlaybackGrouping.isGame(context.packageManager, pkg) },
         )
     }
 
@@ -567,7 +569,7 @@ class VolumeOverlayController(
         if (allowBoost && initialLinear > 1f + 0.0001f) {
             seek.unlockBoostZone()
         } else {
-            seek.lockBoostZone(initialLinear.coerceIn(0f, 1f))
+            seek.lockBoostZone()
         }
 
         fun toLinear(ui: Float): Float =
@@ -597,7 +599,7 @@ class VolumeOverlayController(
             if (allowBoost && clamped > 1f) {
                 if (!seek.boostUnlocked) seek.unlockBoostZone()
             } else if (allowBoost && seek.boostUnlocked && clamped <= 1f) {
-                seek.lockBoostZone(clamped)
+                seek.lockBoostZone()
             }
             seek.setProgress(toUi(clamped), fromUser = false)
             updateLabel(clamped)

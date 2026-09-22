@@ -10,28 +10,39 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import com.topjohnwu.superuser.ipc.RootService
+import com.volumemanager.app.AppOpsPlayAudioMute
+import com.volumemanager.app.GameStreamScaler
 import com.volumemanager.app.IPlaybackChangeListener
 import com.volumemanager.app.IVolumePrivilegedService
 import com.volumemanager.app.PlaybackAppInfo
+import com.volumemanager.app.PlayerVolumeApplier
+import com.volumemanager.app.StickyVolumeScheduler
 import com.volumemanager.app.data.PlaybackGrouping
 import com.volumemanager.app.data.VolumePreferences
 import java.lang.reflect.Method
 
 /**
  * Root process via libsu. Enumerates active playbacks and applies per-UID volume
- * through hidden IPlayer.setVolume.
+ * through IPlayer + VolumeShaper; volume 0 also tries AppOps PLAY_AUDIO.
  */
 class VolumeRootService : RootService() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var audioManager: AudioManager? = null
     private var storedVolumes: MutableMap<String, Float> = mutableMapOf()
+    private val usageGamePackages = mutableSetOf<String>()
     private var watcherRegistered = false
     @Volatile
     private var playbackListener: IPlaybackChangeListener? = null
 
+    private val sticky = StickyVolumeScheduler(mainHandler) {
+        val am = audioManager ?: return@StickyVolumeScheduler
+        applyStoredToConfigs(am.activePlaybackConfigurations)
+    }
+
     private val playbackCallback = object : AudioManager.AudioPlaybackCallback() {
         override fun onPlaybackConfigChanged(configs: MutableList<AudioPlaybackConfiguration>?) {
             applyStoredToConfigs(configs.orEmpty())
+            sticky.scheduleBurst()
             notifyPlaybackChanged()
         }
     }
@@ -55,10 +66,8 @@ class VolumeRootService : RootService() {
 
             for (config in configs) {
                 val pkg = packageForConfig(config) ?: continue
-                // Keep muted / stored packages even when isActive becomes false after setVolume(0).
-                val kept = storedVolumes.containsKey(pkg) ||
-                    (storedVolumes.containsKey(VolumePreferences.GAMES_GROUP_KEY) &&
-                        PlaybackGrouping.isGame(packageManager, pkg))
+                noteGameUsage(pkg, config)
+                val kept = volumeForPackage(pkg) != null
                 if (!isPlayingLike(config) && !kept) continue
                 byPackage.getOrPut(pkg) { mutableListOf() }.add(config)
             }
@@ -85,12 +94,30 @@ class VolumeRootService : RootService() {
             val am = audioManager ?: return
             val clamped = volume.coerceIn(0f, VolumePreferences.MAX_VOLUME)
             storedVolumes[packageName] = clamped
+            val isGamesGroup = packageName == VolumePreferences.GAMES_GROUP_KEY
             for (config in am.activePlaybackConfigurations) {
                 val pkg = packageForConfig(config) ?: continue
-                if (pkg == packageName) {
-                    setPlayerVolume(config, clamped)
+                noteGameUsage(pkg, config)
+                val match = if (isGamesGroup) {
+                    isGamePackage(pkg)
+                } else {
+                    pkg == packageName
+                }
+                if (!match) continue
+                PlayerVolumeApplier.apply(config, clamped)
+                applyVolumeToPackage(pkg, clamped)
+            }
+            if (!isGamesGroup) {
+                applyVolumeToPackage(packageName, clamped)
+            } else {
+                for (pkg in storedVolumes.keys) {
+                    if (pkg.startsWith("__")) continue
+                    if (isGamePackage(pkg)) {
+                        applyVolumeToPackage(pkg, clamped)
+                    }
                 }
             }
+            sticky.scheduleBurst()
         }
 
         override fun applyStoredVolumes(stored: Bundle?) {
@@ -102,6 +129,8 @@ class VolumeRootService : RootService() {
             }
             val am = audioManager ?: return
             applyStoredToConfigs(am.activePlaybackConfigurations)
+            syncHardMutesFromStored()
+            sticky.scheduleBurst()
         }
 
         override fun registerPlaybackWatcher() {
@@ -110,10 +139,14 @@ class VolumeRootService : RootService() {
             am.registerAudioPlaybackCallback(playbackCallback, mainHandler)
             watcherRegistered = true
             applyStoredToConfigs(am.activePlaybackConfigurations)
+            syncHardMutesFromStored()
+            sticky.scheduleBurst()
+            sticky.startPeriodic()
         }
 
         override fun unregisterPlaybackWatcher() {
             if (!watcherRegistered) return
+            sticky.stop()
             try {
                 audioManager?.unregisterAudioPlaybackCallback(playbackCallback)
             } catch (t: Throwable) {
@@ -163,14 +196,66 @@ class VolumeRootService : RootService() {
 
     private fun applyStoredToConfigs(configs: List<AudioPlaybackConfiguration>) {
         if (storedVolumes.isEmpty()) return
-        val gamesGroup = storedVolumes[VolumePreferences.GAMES_GROUP_KEY]
+        var streamTarget: Float? = null
         for (config in configs) {
             val pkg = packageForConfig(config) ?: continue
-            val vol = storedVolumes[pkg]
-                ?: gamesGroup?.takeIf { PlaybackGrouping.isGame(packageManager, pkg) }
-                ?: continue
-            setPlayerVolume(config, vol)
+            noteGameUsage(pkg, config)
+            val vol = volumeForPackage(pkg) ?: continue
+            PlayerVolumeApplier.apply(config, vol)
+            applyVolumeToPackage(pkg, vol)
+            if (isGamePackage(pkg) || PlayerVolumeApplier.isSoundPoolType(config)) {
+                val g = vol.coerceIn(0f, 1f)
+                streamTarget = streamTarget?.let { minOf(it, g) } ?: g
+            }
         }
+        GameStreamScaler.sync(audioManager ?: return, streamTarget)
+    }
+
+    private fun syncHardMutesFromStored() {
+        if (storedVolumes.isEmpty()) return
+        val am = audioManager ?: return
+        val gamesGroup = storedVolumes[VolumePreferences.GAMES_GROUP_KEY]
+        for ((pkg, vol) in storedVolumes) {
+            if (pkg.startsWith("__")) continue
+            val effective = if (gamesGroup != null && isGamePackage(pkg)) {
+                gamesGroup
+            } else {
+                vol
+            }
+            applyVolumeToPackage(pkg, effective)
+        }
+        if (gamesGroup != null) {
+            for (config in am.activePlaybackConfigurations) {
+                val pkg = packageForConfig(config) ?: continue
+                noteGameUsage(pkg, config)
+                if (isGamePackage(pkg)) {
+                    applyVolumeToPackage(pkg, gamesGroup)
+                }
+            }
+        }
+    }
+
+    private fun applyVolumeToPackage(pkg: String, volume: Float) {
+        AppOpsPlayAudioMute.setMuted(this, pkg, volume <= 0f)
+    }
+
+    private fun noteGameUsage(pkg: String, config: AudioPlaybackConfiguration) {
+        try {
+            if (PlaybackGrouping.isGameUsage(config.audioAttributes.usage)) {
+                usageGamePackages.add(pkg)
+            }
+        } catch (_: Throwable) {
+        }
+    }
+
+    private fun isGamePackage(pkg: String): Boolean =
+        usageGamePackages.contains(pkg) ||
+            PlaybackGrouping.isGame(packageManager, pkg)
+
+    private fun volumeForPackage(pkg: String): Float? {
+        storedVolumes[pkg]?.let { return it }
+        val gamesGroup = storedVolumes[VolumePreferences.GAMES_GROUP_KEY] ?: return null
+        return if (isGamePackage(pkg)) gamesGroup else null
     }
 
     private fun packageForConfig(config: AudioPlaybackConfiguration): String? {
@@ -198,18 +283,6 @@ class VolumeRootService : RootService() {
             m.invoke(config) as Boolean
         } catch (_: Throwable) {
             true
-        }
-    }
-
-    private fun setPlayerVolume(config: AudioPlaybackConfiguration, volume: Float) {
-        try {
-            val getProxy = AudioPlaybackConfiguration::class.java.getDeclaredMethod("getPlayerProxy")
-            getProxy.isAccessible = true
-            val player = getProxy.invoke(config) ?: return
-            val setVolume = player.javaClass.getMethod("setVolume", Float::class.javaPrimitiveType)
-            setVolume.invoke(player, volume)
-        } catch (t: Throwable) {
-            Log.w(TAG, "setPlayerVolume failed for config", t)
         }
     }
 

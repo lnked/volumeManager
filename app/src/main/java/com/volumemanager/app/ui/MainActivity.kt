@@ -25,6 +25,7 @@ import com.volumemanager.app.VolumeManagerApp
 import com.volumemanager.app.a11y.VolumeAccessibilityService
 import com.volumemanager.app.data.AppSettingsPreferences
 import com.volumemanager.app.data.BackendKind
+import com.volumemanager.app.overlay.DbVolumeMapper
 import com.volumemanager.app.root.RootVolumeController
 import rikka.shizuku.Shizuku
 import kotlin.math.roundToInt
@@ -176,7 +177,9 @@ class MainActivity : AppCompatActivity(), VolumeController.Listener {
             val asSystem = isAsSystem()
             volumeSeek.isEnabled = !asSystem
             volumeLabel.isEnabled = !asSystem
-            val pct = (getVolume() * 100f).roundToInt()
+            // Percent = equal-dB position, not linear amplitude.
+            val pct = (DbVolumeMapper.linearToUi(getVolume(), 1f) * 100f).roundToInt()
+                .coerceIn(0, 100)
             volumeSeek.progress = pct
             volumeLabel.text = getString(R.string.settings_volume_percent, pct)
         }
@@ -189,7 +192,7 @@ class MainActivity : AppCompatActivity(), VolumeController.Listener {
         volumeSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 volumeLabel.text = getString(R.string.settings_volume_percent, progress)
-                if (fromUser) setVolume(progress / 100f)
+                if (fromUser) setVolume(DbVolumeMapper.uiToLinear(progress / 100f, 1f))
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
             override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit

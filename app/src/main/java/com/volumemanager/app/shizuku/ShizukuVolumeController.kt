@@ -19,6 +19,8 @@ import com.volumemanager.app.R
 import com.volumemanager.app.VolumeController
 import com.volumemanager.app.data.AppSettingsPreferences
 import com.volumemanager.app.data.DefaultVolumeResolver
+import com.volumemanager.app.data.PlaybackGrouping
+import com.volumemanager.app.data.StoredVolumeLookup
 import com.volumemanager.app.data.VolumePreferences
 import com.volumemanager.app.privileged.VolumePrivilegedService
 import rikka.shizuku.Shizuku
@@ -266,8 +268,8 @@ class ShizukuVolumeController(
     }
 
     override fun getStoredVolume(packageName: String): Float {
-        if (preferences.hasVolume(packageName)) {
-            return preferences.getVolume(packageName)
+        StoredVolumeLookup.get(preferences, context.packageManager, packageName)?.let {
+            return it
         }
         val resolved = defaultFor(packageName)
         setPackageVolume(packageName, resolved)
@@ -289,7 +291,7 @@ class ShizukuVolumeController(
             activePackages = active,
             knownKeys = preferences.allVolumes().keys,
             getVolume = { pkg ->
-                if (preferences.hasVolume(pkg)) preferences.getVolume(pkg) else 1f
+                StoredVolumeLookup.getOrUnity(preferences, context.packageManager, pkg)
             },
             applyVolume = { pkg, vol ->
                 preferences.setVolume(pkg, vol)
@@ -299,6 +301,7 @@ class ShizukuVolumeController(
                     Log.w(TAG, "ensureMediaStreamCeiling apply failed for $pkg", t)
                 }
             },
+            isGame = { pkg -> PlaybackGrouping.isGame(context.packageManager, pkg) },
         )
     }
 
