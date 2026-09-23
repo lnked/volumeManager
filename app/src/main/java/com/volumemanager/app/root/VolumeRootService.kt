@@ -117,6 +117,7 @@ class VolumeRootService : RootService() {
                     }
                 }
             }
+            syncGameStream(am.activePlaybackConfigurations)
             sticky.scheduleBurst()
         }
 
@@ -194,22 +195,33 @@ class VolumeRootService : RootService() {
         super.onDestroy()
     }
 
-    private fun applyStoredToConfigs(configs: List<AudioPlaybackConfiguration>) {
-        if (storedVolumes.isEmpty()) return
-        var streamTarget: Float? = null
-        for (config in configs) {
-            val pkg = packageForConfig(config) ?: continue
-            noteGameUsage(pkg, config)
-            val vol = volumeForPackage(pkg) ?: continue
-            PlayerVolumeApplier.apply(config, vol)
-            applyVolumeToPackage(pkg, vol)
-            if (isGamePackage(pkg) || PlayerVolumeApplier.isSoundPoolType(config)) {
+        private fun applyStoredToConfigs(configs: List<AudioPlaybackConfiguration>) {
+            if (storedVolumes.isNotEmpty()) {
+                for (config in configs) {
+                    val pkg = packageForConfig(config) ?: continue
+                    noteGameUsage(pkg, config)
+                    val vol = volumeForPackage(pkg) ?: continue
+                    PlayerVolumeApplier.apply(config, vol)
+                    applyVolumeToPackage(pkg, vol)
+                }
+            }
+            syncGameStream(configs)
+        }
+
+        /** Duck STREAM_MUSIC only for actively playing game/SoundPool; else restore max. */
+        private fun syncGameStream(configs: List<AudioPlaybackConfiguration>) {
+            val am = audioManager ?: return
+            var streamTarget: Float? = null
+            for (config in configs) {
+                if (!isPlayingLike(config)) continue
+                val pkg = packageForConfig(config) ?: continue
+                if (!isGamePackage(pkg) && !PlayerVolumeApplier.isSoundPoolType(config)) continue
+                val vol = volumeForPackage(pkg) ?: continue
                 val g = vol.coerceIn(0f, 1f)
                 streamTarget = streamTarget?.let { minOf(it, g) } ?: g
             }
+            GameStreamScaler.sync(am, streamTarget)
         }
-        GameStreamScaler.sync(audioManager ?: return, streamTarget)
-    }
 
     private fun syncHardMutesFromStored() {
         if (storedVolumes.isEmpty()) return

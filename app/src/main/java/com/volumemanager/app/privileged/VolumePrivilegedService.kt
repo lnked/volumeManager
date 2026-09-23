@@ -130,6 +130,7 @@ class VolumePrivilegedService : IVolumePrivilegedService.Stub {
                 }
             }
         }
+        syncGameStream(audioManager.activePlaybackConfigurations)
         sticky.scheduleBurst()
     }
 
@@ -180,18 +181,28 @@ class VolumePrivilegedService : IVolumePrivilegedService.Stub {
     }
 
     private fun applyStoredToConfigs(configs: List<AudioPlaybackConfiguration>) {
-        if (storedVolumes.isEmpty()) return
+        if (storedVolumes.isNotEmpty()) {
+            for (config in configs) {
+                val pkg = packageForConfig(config) ?: continue
+                noteGameUsage(pkg, config)
+                val vol = volumeForPackage(pkg) ?: continue
+                PlayerVolumeApplier.apply(config, vol)
+                applyVolumeToPackage(pkg, vol)
+            }
+        }
+        syncGameStream(configs)
+    }
+
+    /** Duck STREAM_MUSIC only for actively playing game/SoundPool; else restore max. */
+    private fun syncGameStream(configs: List<AudioPlaybackConfiguration>) {
         var streamTarget: Float? = null
         for (config in configs) {
+            if (!isPlayingLike(config)) continue
             val pkg = packageForConfig(config) ?: continue
-            noteGameUsage(pkg, config)
+            if (!isGamePackage(pkg) && !PlayerVolumeApplier.isSoundPoolType(config)) continue
             val vol = volumeForPackage(pkg) ?: continue
-            PlayerVolumeApplier.apply(config, vol)
-            applyVolumeToPackage(pkg, vol)
-            if (isGamePackage(pkg) || PlayerVolumeApplier.isSoundPoolType(config)) {
-                val g = vol.coerceIn(0f, 1f)
-                streamTarget = streamTarget?.let { minOf(it, g) } ?: g
-            }
+            val g = vol.coerceIn(0f, 1f)
+            streamTarget = streamTarget?.let { minOf(it, g) } ?: g
         }
         GameStreamScaler.sync(audioManager, streamTarget)
     }
